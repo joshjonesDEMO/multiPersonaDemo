@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursor Demo Playbook — Four Personas, One Story</title>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --surface: #F5F5F5;
+    --surface2: #EBEBEB;
+    --dark: #0B0B0C;
+    --dark2: #1A1A1D;
+    --accent: #E8601B;
+    --text: #1A1A1D;
+    --text-secondary: #4A4A52;
+    --text-muted: #7A7A82;
+    --divider: #D8D8DC;
+    --sa-color: #2563EB;
+    --de-color: #16A34A;
+    --po-color: #7C3AED;
+    --dev-color: #C2410C;
+    --sa-bg: #EFF6FF;
+    --de-bg: #F0FDF4;
+    --po-bg: #F5F3FF;
+    --dev-bg: #FFF7ED;
+    --code-bg: #0F0F10;
+    --code-text: #E2E2E6;
+    --code-comment: #6B7280;
+    --code-label: #F59E0B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--dark);
+    border-bottom: 1px solid #2B2B2F;
+    padding: 0 32px;
+    display: flex; align-items: center; gap: 4px;
+    height: 52px;
+    overflow-x: auto; white-space: nowrap;
+  }
+  .nav-logo { font-size: 13px; font-weight: 700; color: #FFFFFF; margin-right: 20px; flex-shrink: 0; letter-spacing: 0.01em; }
+  .nav a { font-size: 13px; color: #B4B4B8; text-decoration: none; padding: 5px 10px; border-radius: 6px; flex-shrink: 0; }
+  .nav a:hover { color: #FFFFFF; background: #2B2B2F; }
+  .hero { background: var(--dark); padding: 60px 32px 52px; text-align: center; }
+  .hero-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .hero h1 { font-size: 38px; font-weight: 800; color: #FFFFFF; line-height: 1.15; max-width: 660px; margin: 0 auto 14px; }
+  .hero-sub { font-size: 16px; color: #B4B4B8; max-width: 560px; margin: 0 auto 32px; line-height: 1.65; }
+  .hero-badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .hero-badge { background: #1A1A1D; border: 1px solid #2B2B2F; border-radius: 8px; padding: 9px 16px; font-size: 13px; color: #E2E2E6; }
+  .container { max-width: 940px; margin: 0 auto; padding: 0 32px; }
+  .section { padding: 52px 0 0; }
+  .section:last-of-type { padding-bottom: 72px; }
+  h2 { font-size: 24px; font-weight: 800; color: var(--dark); margin-bottom: 8px; }
+  h3 { font-size: 17px; font-weight: 700; color: var(--dark); margin-bottom: 10px; margin-top: 24px; }
+  h4 { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; }
+  p { color: var(--text-secondary); margin-bottom: 10px; line-height: 1.65; }
+  .section-intro { font-size: 15px; color: var(--text-secondary); max-width: 680px; margin-bottom: 28px; line-height: 1.65; }
+
+  /* Story flow */
+  .story-flow { display: flex; border: 1px solid var(--divider); border-radius: 10px; overflow: hidden; margin: 24px 0; }
+  .story-node { flex: 1; padding: 18px 14px; text-align: center; border-right: 1px solid var(--divider); }
+  .story-node:last-child { border-right: none; }
+  .story-node .num { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+  .story-node .name { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+  .story-node .phase { font-size: 11px; color: var(--text-muted); margin-bottom: 7px; }
+  .story-node .task { font-size: 12px; color: var(--text-secondary); line-height: 1.45; }
+  .story-node.sa { background: var(--sa-bg); } .story-node.sa .name { color: var(--sa-color); }
+  .story-node.de { background: var(--de-bg); } .story-node.de .name { color: var(--de-color); }
+  .story-node.po { background: var(--po-bg); } .story-node.po .name { color: var(--po-color); }
+  .story-node.dev { background: var(--dev-bg); } .story-node.dev .name { color: var(--dev-color); }
+
+  /* Handoff comparison */
+  .handoff { display: grid; grid-template-columns: 1fr 40px 1fr; border: 1px solid var(--divider); border-radius: 10px; overflow: hidden; margin: 20px 0; }
+  .hbefore { padding: 16px 18px; background: #FEF2F2; }
+  .harrow { background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--accent); border-right: 1px solid var(--divider); }
+  .hafter { padding: 16px 18px; background: #F0FDF4; border-left: 1px solid var(--divider); }
+  .hlabel { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; }
+  .hbefore .hlabel { color: #DC2626; }
+  .hafter .hlabel { color: #16A34A; }
+  .handoff ul { list-style: none; padding: 0; }
+  .handoff li { font-size: 13px; color: var(--text-secondary); padding: 2px 0 2px 16px; line-height: 1.45; position: relative; }
+  .hbefore li::before { content: "✗"; color: #DC2626; position: absolute; left: 0; top: 2px; font-size: 10px; }
+  .hafter li::before { content: "✓"; color: #16A34A; position: absolute; left: 0; top: 2px; font-size: 10px; }
+
+  /* Persona card */
+  .persona-card { border: 1px solid var(--divider); border-radius: 12px; overflow: hidden; margin-bottom: 8px; }
+  .persona-header { display: flex; align-items: center; gap: 16px; padding: 22px 26px; color: white; }
+  .persona-header.sa { background: var(--sa-color); }
+  .persona-header.de { background: var(--de-color); }
+  .persona-header.po { background: var(--po-color); }
+  .persona-header.dev { background: var(--dev-color); }
+  .persona-num { width: 38px; height: 38px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; flex-shrink: 0; }
+  .persona-header h2 { font-size: 21px; font-weight: 800; color: white; margin-bottom: 2px; }
+  .persona-header p { font-size: 13px; color: rgba(255,255,255,0.8); margin: 0; }
+  .persona-body { padding: 26px; }
+
+  /* Use cases */
+  .uc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-bottom: 28px; }
+  .uc { background: var(--surface); border-radius: 8px; padding: 13px 15px; border-left: 3px solid var(--divider); }
+  .uc.sa { border-left-color: var(--sa-color); } .uc.de { border-left-color: var(--de-color); }
+  .uc.po { border-left-color: var(--po-color); } .uc.dev { border-left-color: var(--dev-color); }
+  .uc-title { font-size: 13px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+  .uc-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.45; margin: 0; }
+
+  /* Demo steps */
+  .demo-steps { margin: 8px 0 28px; }
+  .step { display: flex; gap: 14px; margin-bottom: 22px; }
+  .step-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: white; flex-shrink: 0; margin-top: 3px; }
+  .step-num.sa { background: var(--sa-color); } .step-num.de { background: var(--de-color); }
+  .step-num.po { background: var(--po-color); } .step-num.dev { background: var(--dev-color); }
+  .step-content { flex: 1; }
+  .step-title { font-size: 15px; font-weight: 700; color: var(--dark); margin-bottom: 5px; }
+  .step-ctx { font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+
+  /* Chips */
+  .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; margin-bottom: 8px; letter-spacing: 0.04em; }
+  .chip.agents { background: #EEF2FF; color: #4338CA; }
+  .chip.cloud { background: #EFF6FF; color: #1D4ED8; }
+  .chip.bugbot { background: #FFF7ED; color: #C2410C; }
+
+  /* Prompt blocks */
+  .prompt-block { background: var(--code-bg); border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
+  .prompt-top { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: #1A1A1D; border-bottom: 1px solid #2B2B2F; }
+  .prompt-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--code-label); }
+  .prompt-dot.cloud { background: #60A5FA; }
+  .prompt-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--code-label); }
+  .prompt-tag.cloud { color: #60A5FA; }
+  .prompt-body { padding: 13px 16px; font-family: 'SF Mono','Fira Code','Consolas',monospace; font-size: 13px; line-height: 1.6; color: var(--code-text); white-space: pre-wrap; word-break: break-word; }
+  .at { color: #A78BFA; }
+  .cmt { color: var(--code-comment); font-style: italic; }
+  .prompt-note { font-size: 12px; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--divider); border-radius: 6px; padding: 9px 13px; margin-top: 6px; line-height: 1.5; }
+  .prompt-note strong { color: var(--dark); font-weight: 700; }
+
+  /* Table */
+  .ba-table { width: 100%; border-collapse: collapse; margin: 14px 0 24px; font-size: 14px; }
+  .ba-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; border-bottom: 2px solid var(--divider); }
+  .ba-table th.t-phase { background: var(--surface); color: var(--text-muted); }
+  .ba-table th.t-before { background: #FEF2F2; color: #DC2626; }
+  .ba-table th.t-after { background: #F0FDF4; color: #16A34A; border-left: 1px solid var(--divider); }
+  .ba-table td { padding: 10px 14px; color: var(--text-secondary); vertical-align: top; border-bottom: 1px solid var(--divider); line-height: 1.5; }
+  .ba-table td.ph { font-weight: 700; color: var(--dark); background: var(--surface); white-space: nowrap; }
+  .ba-table td.af { border-left: 1px solid var(--divider); background: #FAFFFE; }
+
+  /* Insight box */
+  .insight { background: #FFF7ED; border: 1px solid #FED7AA; border-radius: 8px; padding: 14px 18px; margin: 18px 0; font-size: 14px; color: #92400E; line-height: 1.6; }
+  .insight strong { color: #7C2D12; }
+  .insight-purple { background: #F5F3FF; border-color: #DDD6FE; color: #4C1D95; }
+  .insight-purple strong { color: #3730A3; }
+
+  /* Tips */
+  .tips-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+  .tip { background: var(--surface); border-radius: 8px; padding: 15px 17px; border: 1px solid var(--divider); }
+  .tip h4 { font-size: 12px; margin-bottom: 7px; }
+  .tip p { font-size: 13px; margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+  hr { border: none; border-top: 1px solid var(--divider); margin: 28px 0; }
+  [id] { scroll-margin-top: 64px; }
+  .footer { background: var(--dark); padding: 24px 32px; text-align: center; margin-top: 52px; }
+  .footer p { color: #59595E; font-size: 12px; margin: 0; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 26px; }
+    .story-flow { flex-direction: column; }
+    .story-node { border-right: none; border-bottom: 1px solid var(--divider); }
+    .handoff { grid-template-columns: 1fr; }
+    .harrow { display: none; }
+    .container { padding: 0 16px; }
+    .nav { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <span class="nav-logo">◼ Cursor Demo Guide</span>
+  <a href="#story">The Story</a>
+  <a href="#sa">System Architect</a>
+  <a href="#de">Data Engineer</a>
+  <a href="#po">Product Owner</a>
+  <a href="#dev">Developer</a>
+  <a href="#flow">Connected Flow</a>
+  <a href="#tips">Tips</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-eyebrow">Cursor — Demo Playbook</div>
+  <h1>Four Personas.<br>One Story.</h1>
+  <p class="hero-sub">A single connected demo showing how Cursor eliminates the handoff gaps between Plan, Design, Build, and Review — and why that's the real productivity story.</p>
+  <div class="hero-badges">
+    <div class="hero-badge">🏗 Project Apex: Developer Velocity Dashboard</div>
+    <div class="hero-badge">⚡ Primary surface: Agents Window</div>
+    <div class="hero-badge">☁️ Cloud Agents in Architect + Developer sections</div>
+  </div>
+</section>
+
+<div class="container">
+
+<!-- THE STORY -->
+<section class="section" id="story">
+  <h2>The Single Story</h2>
+  <p class="section-intro">Your platform team is building <strong>Project Apex</strong> — an internal Developer Velocity Dashboard ingesting signals from GitHub, CI/CD, and code review tools to surface bottlenecks and productivity trends. Greenfield, one sprint, four personas all involved. This is the demo story.</p>
+
+  <div class="insight">
+    <strong>The pitch underneath the demo:</strong> The bottleneck in software delivery isn't speed inside any one phase — it's the context that gets lost at handoffs between phases. SA writes a doc, DE misinterprets a data contract, PO writes stories without code context, Dev implements the wrong thing. Cursor is the context layer that makes handoffs disappear.
+  </div>
+
+  <div class="story-flow">
+    <div class="story-node sa">
+      <div class="num">Phase 1 — Design</div>
+      <div class="name">System Architect</div>
+      <div class="phase">Plan + Design</div>
+      <div class="task">Audits the codebase, designs event-driven services, generates API contracts and ADR</div>
+    </div>
+    <div class="story-node de">
+      <div class="num">Phase 2 — Build</div>
+      <div class="name">Data Engineer</div>
+      <div class="phase">Write</div>
+      <div class="task">Builds ingestion pipeline from GitHub webhooks, writes dbt models, adds data quality checks</div>
+    </div>
+    <div class="story-node po">
+      <div class="num">Phase 3 — Validate</div>
+      <div class="name">Product Owner</div>
+      <div class="phase">Plan + Review</div>
+      <div class="task">Extracts stories from stakeholder notes, audits implementation vs. acceptance criteria</div>
+    </div>
+    <div class="story-node dev">
+      <div class="num">Phase 4 — Ship</div>
+      <div class="name">Developer</div>
+      <div class="phase">Write + Review + Deploy</div>
+      <div class="task">Implements API endpoints from spec + ticket, writes tests, runs pre-PR security scan</div>
+    </div>
+  </div>
+
+  <h3>The Handoff Transformation</h3>
+  <table class="ba-table">
+    <thead>
+      <tr>
+        <th class="t-phase">Handoff</th>
+        <th class="t-before">❌ Current State</th>
+        <th class="t-after">✅ With Cursor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ph">SA → DE</td>
+        <td>Export ADR to Confluence. Ping in Slack. DE reads it a day later, misinterprets the data contract. Meeting scheduled to align. DE implements wrong schema.</td>
+        <td class="af">SA commits ADR.md + openapi.yaml to the repo. DE opens Agents Window: "@docs/ADR.md — based on this spec, scaffold the ingestion pipeline." No meeting. Full context.</td>
+      </tr>
+      <tr>
+        <td class="ph">DE → PO</td>
+        <td>DE drops a comment in Jira. PO has to read code to verify. QA testing is manual. "Is it done?" back-and-forth for days.</td>
+        <td class="af">PO opens Agents Window: "@src/ @docs/requirements.md — review this implementation vs. our MVP requirements. What's shipped, what's missing?" Instant audit, no code expertise needed.</td>
+      </tr>
+      <tr>
+        <td class="ph">PO → Dev</td>
+        <td>Dev reads the Jira ticket. Then opens the architecture doc. Then the codebase. Three tabs, two meetings, multiple Slack threads before writing a line.</td>
+        <td class="af">Dev opens Agents Window: "@docs/ADR.md @docs/requirements.md @src/ — I'm on ticket AC-04. Best approach?" Everything in one context from day one.</td>
+      </tr>
+      <tr>
+        <td class="ph">Dev → Review</td>
+        <td>Manual PR review. Separate CI scans. QA runs test suite. Bugs surface post-merge. 2–3 cycles before merge.</td>
+        <td class="af">Cloud Agent runs pre-PR security scan. Bugbot catches logic bugs automatically. Reviewers get a clean PR. First-review merge rate climbs.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ===== SYSTEM ARCHITECT ===== -->
+<section class="section" id="sa">
+  <div class="persona-card">
+    <div class="persona-header sa">
+      <div class="persona-num">1</div>
+      <div>
+        <h2>System Architect</h2>
+        <p>SDLC Phase: Plan + Design — "How do we build this? Architecture, services, API contracts."</p>
+      </div>
+    </div>
+    <div class="persona-body">
+
+      <h4>Common Use Cases</h4>
+      <div class="uc-grid">
+        <div class="uc sa"><div class="uc-title">Codebase archaeology</div><p class="uc-desc">Inherit a large repo. Map service boundaries, coupling risks, and ownership without digging through stale docs.</p></div>
+        <div class="uc sa"><div class="uc-title">Architecture Decision Records</div><p class="uc-desc">Generate ADRs with tradeoffs analysis grounded in the actual codebase — not generic templates.</p></div>
+        <div class="uc sa"><div class="uc-title">API contract generation</div><p class="uc-desc">Produce OpenAPI specs that match existing route conventions — ready for DEs and devs to implement against.</p></div>
+        <div class="uc sa"><div class="uc-title">Breaking change analysis</div><p class="uc-desc">Map the blast radius of a proposed change across the entire repo before committing to it. Catch downstream surprises early.</p></div>
+        <div class="uc sa"><div class="uc-title">Migration planning</div><p class="uc-desc">Plan monolith extractions, DB migrations, or framework upgrades with full dependency context visible in the Agent.</p></div>
+      </div>
+
+      <h4>Demo Flow — Cloud Agent + Agents Window</h4>
+      <div class="demo-steps">
+
+        <div class="step">
+          <div class="step-num sa">1</div>
+          <div class="step-content">
+            <div class="step-title">Kick off a Cloud Agent codebase audit</div>
+            <p class="step-ctx">You're new to the repo. Fire a Cloud Agent to do a full architectural audit while you're in your next meeting. Come back to the results.</p>
+            <span class="chip cloud">☁️ Cloud Agent</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot cloud"></div><span class="prompt-tag cloud">Cloud Agent — runs asynchronously</span></div>
+              <div class="prompt-body">Perform a comprehensive architectural audit of this codebase and save results to /docs/architecture-audit.md:
+
+1. Map all services/modules and their responsibilities
+2. Build a dependency graph between services
+3. Flag circular dependencies and over-coupled components
+4. Highlight services violating single responsibility
+5. Estimate blast radius if each key service went down</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> "I'll kick that off before this meeting — it'll be ready when I'm back." Async, non-blocking, productive while away. This is how the Cloud Agent story opens: not a demo trick, a real workflow shift.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num sa">2</div>
+          <div class="step-content">
+            <div class="step-title">Live architectural exploration in the Agents Window</div>
+            <p class="step-ctx">Audit is back. Now use the Agents Window to ask strategic questions about where the new service fits.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/architecture-audit.md</span> <span class="at">@src/</span>
+
+We're adding a new AnalyticsService to ingest GitHub webhook events.
+Based on the audit, which existing services does it need to integrate with,
+and what are the 3 riskiest integration points I should design carefully?</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> SA is asking strategic questions, not searching files manually. Cursor surfaces the right context from across the entire repo.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num sa">3</div>
+          <div class="step-content">
+            <div class="step-title">Generate an Architecture Decision Record</div>
+            <p class="step-ctx">Design the new service. Cursor grounds the ADR in real codebase patterns — not a blank Confluence template.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@src/services/</span> <span class="at">@docs/architecture-audit.md</span>
+
+Generate an Architecture Decision Record for the new AnalyticsService:
+- Event-driven vs. batch processing (evaluate both against our stack)
+- Integration contracts with UserService and AuthService
+- Data model for developer_event and velocity_metric
+- Infrastructure requirements
+
+Include tradeoffs and rejected alternatives with reasons.
+Save to <span class="at">@docs/ADR-001-analytics-service.md</span></div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> The ADR references real service names and patterns from the codebase. This is the artifact the Data Engineer picks up next — no meeting required.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num sa">4</div>
+          <div class="step-content">
+            <div class="step-title">Generate OpenAPI contracts for downstream teams</div>
+            <p class="step-ctx">Produce the API spec the DE and Developer will implement against. Cursor matches existing route conventions automatically.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/ADR-001-analytics-service.md</span> <span class="at">@src/routes/</span>
+
+Generate OpenAPI 3.0 specs for the AnalyticsService, following our existing
+route conventions and auth patterns:
+- POST /webhooks/github (ingest GitHub events)
+- GET /api/v1/metrics/velocity/{userId} (30-day developer velocity)
+- GET /api/v1/metrics/team/{teamId}/summary (team rollup)
+
+Save to <span class="at">@docs/openapi-analytics.yaml</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num sa">5</div>
+          <div class="step-content">
+            <div class="step-title">Blast radius analysis before finalizing</div>
+            <p class="step-ctx">Before handing off, verify the design won't break anything downstream.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@src/</span>
+
+I'm proposing to add a shared EventBus connecting UserService,
+AnalyticsService, and AuthService.
+
+Scan the entire codebase and tell me:
+1. Every file that would need to change
+2. Any existing event handling code I'd be stepping on
+3. Risk level for each change (Low / Medium / High)</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <h4>Handoff: SA → Data Engineer</h4>
+      <div class="handoff">
+        <div class="hbefore">
+          <div class="hlabel">Before Cursor</div>
+          <ul>
+            <li>ADR exported as PDF to Confluence</li>
+            <li>SA pings DE in Slack: "ADR is live, take a look"</li>
+            <li>DE reads it a day later, misses context on data contract</li>
+            <li>Alignment meeting scheduled for Thursday</li>
+            <li>DE implements wrong event schema</li>
+          </ul>
+        </div>
+        <div class="harrow">→</div>
+        <div class="hafter">
+          <div class="hlabel">With Cursor</div>
+          <ul>
+            <li>SA commits ADR-001.md + openapi-analytics.yaml to /docs</li>
+            <li>DE opens Agents Window, @-references ADR directly</li>
+            <li>Full context: data contracts, service boundaries, tradeoffs</li>
+            <li>No meeting. No Confluence tab. No misinterpretation.</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== DATA ENGINEER ===== -->
+<section class="section" id="de">
+  <div class="persona-card">
+    <div class="persona-header de">
+      <div class="persona-num">2</div>
+      <div>
+        <h2>Data Engineer</h2>
+        <p>SDLC Phase: Write — "Build the pipelines that feed everything else."</p>
+      </div>
+    </div>
+    <div class="persona-body">
+
+      <h4>Common Use Cases</h4>
+      <div class="uc-grid">
+        <div class="uc de"><div class="uc-title">Scaffold pipeline from spec</div><p class="uc-desc">Turn an architecture spec into a working pipeline skeleton — ingestion handlers, models, queue setup — matching existing project patterns.</p></div>
+        <div class="uc de"><div class="uc-title">Write transformation logic</div><p class="uc-desc">Generate dbt models, feature engineering functions, or aggregation queries grounded in real schema and existing conventions.</p></div>
+        <div class="uc de"><div class="uc-title">Data quality tests</div><p class="uc-desc">Generate schema validation, null handling, and regression tests for every transformation in the testing framework already in use.</p></div>
+        <div class="uc de"><div class="uc-title">Debug production failures</div><p class="uc-desc">Drop an error log, get root cause analysis, a fix, and a regression test — without manually tracing through stack frames.</p></div>
+        <div class="uc de"><div class="uc-title">Query optimization</div><p class="uc-desc">Analyze slow dbt models for bottlenecks — get partitioning strategy, index recommendations, and rewritten SQL in the same conversation.</p></div>
+      </div>
+
+      <h4>Demo Flow — Agents Window</h4>
+      <div class="demo-steps">
+
+        <div class="step">
+          <div class="step-num de">1</div>
+          <div class="step-content">
+            <div class="step-title">Scaffold the ingestion service from the ADR — no meeting needed</div>
+            <p class="step-ctx">This is the handoff moment. DE has the ADR from the SA. @-reference it directly. No translation required.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/ADR-001-analytics-service.md</span> <span class="at">@docs/openapi-analytics.yaml</span> <span class="at">@src/services/</span>
+
+Based on the architecture spec and our existing service patterns,
+scaffold the GitHubWebhookIngestionService:
+- FastAPI endpoints matching the OpenAPI spec
+- Event models (PullRequestEvent, PushEvent, ReviewEvent) using our Pydantic patterns
+- Async processing using our existing message queue setup
+- Folder structure consistent with our other services</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> DE is building from the SA's live spec — no manual translation, no misinterpretation. Cursor generates code matching the actual project conventions, not generic boilerplate. <strong>This is the "between the boxes" payoff made concrete.</strong></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num de">2</div>
+          <div class="step-content">
+            <div class="step-title">Write dbt models for velocity metrics</div>
+            <p class="step-ctx">Transform raw GitHub events into the metric tables the dashboard will query.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@dbt/models/</span> <span class="at">@src/ingestion/event_models.py</span>
+
+Write dbt models transforming raw GitHub webhook events into velocity metrics.
+Follow existing model conventions in @dbt/models/:
+
+1. stg_github_events — staging: clean and type-cast raw events
+2. int_developer_daily — PR opened, merged, review latency per developer per day
+3. fct_team_velocity_weekly — cycle time, throughput, review queue depth per team</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num de">3</div>
+          <div class="step-content">
+            <div class="step-title">Add data quality tests</div>
+            <p class="step-ctx">Every transformation needs validation. Generate tests that catch schema drift and nulls before they hit the dashboard.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@src/ingestion/github_handler.py</span> <span class="at">@tests/</span>
+
+Add data quality checks for the GitHub webhook ingestion:
+- Schema validation for all event types (PR, push, review)
+- Null handling for optional fields: merged_at, review_state, requested_reviewers
+- Duplicate event detection using event_id
+- Write pytest tests for edge cases following our patterns in @tests/</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num de">4</div>
+          <div class="step-content">
+            <div class="step-title">Debug a failing pipeline — live</div>
+            <p class="step-ctx">Most relatable DE demo moment. Paste a real error log and watch Cursor trace root cause, fix, and test in one pass.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@src/ingestion/</span>
+
+Pipeline failing in production:
+KeyError: 'merged_at' in github_handler.py line 47
+<span class="cmt">[ paste stack trace ]</span>
+
+1. Trace the root cause through the code path
+2. Fix the schema handling (merged_at only exists on closed PRs)
+3. Add a regression test that would have caught this</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> Root cause + fix + test in a single conversation. Shows the full debugging loop without switching tools.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <h4>Handoff: Data Engineer → Product Owner</h4>
+      <div class="handoff">
+        <div class="hbefore">
+          <div class="hlabel">Before Cursor</div>
+          <ul>
+            <li>DE drops a comment in Jira: "Pipeline done, pushed to staging"</li>
+            <li>PO has no way to verify without reading code</li>
+            <li>QA manual testing begins — finds gaps two days in</li>
+            <li>"Is merged_at nullable?" — Slack thread, resolved 3 hours later</li>
+          </ul>
+        </div>
+        <div class="harrow">→</div>
+        <div class="hafter">
+          <div class="hlabel">With Cursor</div>
+          <ul>
+            <li>PO opens Agents Window, @-references src/ and requirements.md</li>
+            <li>Asks: "Review this implementation vs. our MVP requirements"</li>
+            <li>Gets instant gap analysis — no code expertise required</li>
+            <li>PO follows up directly with questions about behavior, not code</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRODUCT OWNER ===== -->
+<section class="section" id="po">
+  <div class="persona-card">
+    <div class="persona-header po">
+      <div class="persona-num">3</div>
+      <div>
+        <h2>Product Owner</h2>
+        <p>SDLC Phase: Plan + Review — "Define what ships and verify it actually shipped."</p>
+      </div>
+    </div>
+    <div class="persona-body">
+
+      <div class="insight insight-purple">
+        <strong>Demo unlock:</strong> The PO persona expands the Cursor story beyond engineering. They're using the Agents Window to understand and validate code without writing any. This is a key enterprise expansion message: the platform serves everyone involved in software delivery, not just developers.
+      </div>
+
+      <h4>Common Use Cases</h4>
+      <div class="uc-grid">
+        <div class="uc po"><div class="uc-title">Requirements extraction</div><p class="uc-desc">Turn stakeholder meeting notes into structured user stories, acceptance criteria, and a prioritized MVP list — in minutes.</p></div>
+        <div class="uc po"><div class="uc-title">Implementation gap analysis</div><p class="uc-desc">Check whether the implementation matches requirements without reading code. Know what shipped, what's partial, what's missing.</p></div>
+        <div class="uc po"><div class="uc-title">PR review from a PO lens</div><p class="uc-desc">Review a PR for user-facing behavioral correctness and AC alignment — not code quality. Get QA test scenarios automatically.</p></div>
+        <div class="uc po"><div class="uc-title">Sprint review generation</div><p class="uc-desc">Turn merged PRs and closed tickets into a stakeholder-ready summary — what shipped, what descoped, what's next sprint.</p></div>
+      </div>
+
+      <h4>Demo Flow — Agents Window</h4>
+      <div class="demo-steps">
+
+        <div class="step">
+          <div class="step-num po">1</div>
+          <div class="step-content">
+            <div class="step-title">Extract requirements from stakeholder meeting notes</div>
+            <p class="step-ctx">PO has notes from the kickoff. Instead of manually writing stories over two hours, Cursor does it.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@meetings/stakeholder-kickoff.md</span>
+
+I'm the product owner for Project Apex. Based on these meeting notes:
+
+1. Generate user stories with Gherkin acceptance criteria for each
+2. Create a prioritized MVP feature list (P0 / P1 / P2)
+3. List items explicitly deferred to v2
+4. Surface open questions that need resolution before sprint start
+
+Save to <span class="at">@docs/requirements.md</span></div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> Shows Cursor isn't just for developers. Anyone involved in delivery uses the Agents Window to do real work. This is the "builder class elevation" narrative in action.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num po">2</div>
+          <div class="step-content">
+            <div class="step-title">Implementation gap analysis — no code expertise required</div>
+            <p class="step-ctx">Sprint end is approaching. PO needs to know what's actually done. This is the handoff from DE/Dev to PO.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/requirements.md</span> <span class="at">@src/services/</span> <span class="at">@src/ingestion/</span>
+
+We're approaching sprint end. Review the implementation against our MVP requirements:
+
+- Which stories are fully implemented?
+- Which are partially implemented — and what specifically is missing?
+- Any implementation decisions that conflict with our acceptance criteria?
+- Honest "percent complete" estimate for this sprint?</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> PO gets an honest audit without reading a single line of code. Game-changing for sprint reviews and stakeholder conversations.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num po">3</div>
+          <div class="step-content">
+            <div class="step-title">PR review from a product perspective</div>
+            <p class="step-ctx">Dev submits PR for the velocity endpoint. PO reviews for behavioral correctness — not code quality.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/requirements.md</span>
+<span class="cmt">[ @-reference the changed files or paste the PR diff ]</span>
+
+Review this PR as a product owner — I need:
+1. What user-facing behavior does this change?
+2. Does it satisfy AC-04 (manager views 30-day cycle time)?
+3. What edge cases should QA test?
+4. Any scope creep I should flag to the developer?</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num po">4</div>
+          <div class="step-content">
+            <div class="step-title">Auto-generate sprint review for stakeholders</div>
+            <p class="step-ctx">Sprint ends in 10 minutes. Stakeholder review in 20. PO needs a summary.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/requirements.md</span> <span class="at">@src/</span>
+
+Based on what's been implemented vs. our original requirements,
+draft a 1-page sprint review for stakeholders:
+- What we shipped (user-facing descriptions, no technical jargon)
+- What we descoped and why
+- What's next sprint
+- Any risks or dependencies to call out</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <h4>Handoff: Product Owner → Developer</h4>
+      <div class="handoff">
+        <div class="hbefore">
+          <div class="hlabel">Before Cursor</div>
+          <ul>
+            <li>PO writes Jira tickets manually from stories</li>
+            <li>Dev reads ticket, opens architecture doc, opens codebase — four tabs</li>
+            <li>Unclear how to implement without asking the SA</li>
+            <li>Three "clarifying questions" Slack threads before writing a line</li>
+          </ul>
+        </div>
+        <div class="harrow">→</div>
+        <div class="hafter">
+          <div class="hlabel">With Cursor</div>
+          <ul>
+            <li>Dev opens Agents Window, @-references ADR + requirements + src/</li>
+            <li>"I'm on ticket AC-04 — what's the right approach?" and implement it</li>
+            <li>Cursor has all context: architecture spec, requirements, existing patterns</li>
+            <li>Dev starts building immediately — zero context-switching</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ===== DEVELOPER ===== -->
+<section class="section" id="dev">
+  <div class="persona-card">
+    <div class="persona-header dev">
+      <div class="persona-num">4</div>
+      <div>
+        <h2>Developer</h2>
+        <p>SDLC Phase: Write + Review + Deploy — "Implement, test, and ship with full context from day one."</p>
+      </div>
+    </div>
+    <div class="persona-body">
+
+      <h4>Common Use Cases</h4>
+      <div class="uc-grid">
+        <div class="uc dev"><div class="uc-title">Implement from ticket + spec</div><p class="uc-desc">Drop a ticket, architecture doc, and codebase in context. Get an implementation plan and working code following real project conventions.</p></div>
+        <div class="uc dev"><div class="uc-title">Test-driven development</div><p class="uc-desc">Generate comprehensive test suites that cover edge cases — correctly mocked, using the project's existing test patterns.</p></div>
+        <div class="uc dev"><div class="uc-title">Refactor + inline code review</div><p class="uc-desc">Get a review pass for security issues, N+1 queries, and SOLID violations. Fix the high-priority ones in the same conversation.</p></div>
+        <div class="uc dev"><div class="uc-title">Cross-codebase debugging</div><p class="uc-desc">Trace bugs across service boundaries — Cursor holds the full call chain in context, not just the open file.</p></div>
+        <div class="uc dev"><div class="uc-title">Pre-PR security scan</div><p class="uc-desc">Before submitting a PR, spin a Cloud Agent to run a full security and compliance check asynchronously — results waiting when done.</p></div>
+      </div>
+
+      <h4>Demo Flow — Agents Window + Cloud Agent</h4>
+      <div class="demo-steps">
+
+        <div class="step">
+          <div class="step-num dev">1</div>
+          <div class="step-content">
+            <div class="step-title">Implement from ticket — full context from day one</div>
+            <p class="step-ctx">This is the chain payoff. Dev has the ADR from the SA, requirements from the PO, and existing patterns — all in one Agent context. No meetings, no tabs.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@docs/ADR-001-analytics-service.md</span> <span class="at">@docs/requirements.md</span> <span class="at">@src/</span>
+
+I'm implementing AC-04: "As an engineering manager, I can view my team's
+average PR cycle time for the last 30 days."
+
+Based on the architecture spec and requirements:
+1. What files do I need to touch?
+2. What's the cleanest approach, and are there any gotchas?
+
+Then implement it — follow our existing patterns in @src/routes/ and @src/services/</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> This is the "between the boxes" narrative made concrete. Dev isn't starting cold — they have full project context. No meeting with the SA. No clarification Slacks to the PO. Every phase's output feeds the next through the same system.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num dev">2</div>
+          <div class="step-content">
+            <div class="step-title">Write tests that actually pass</div>
+            <p class="step-ctx">Cursor knows the test patterns, the mocking layer, and the edge cases from the requirements — not just generic test templates.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@src/services/velocity_service.py</span> <span class="at">@tests/</span>
+
+Write comprehensive unit tests for VelocityService:
+- Happy path for get_team_cycle_time() and get_developer_metrics()
+- Edge cases: empty team, single contributor, exactly the 30-day boundary
+- Mock the database layer using our existing patterns in @tests/
+
+Then run the tests and fix any failures.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num dev">3</div>
+          <div class="step-content">
+            <div class="step-title">Cross-codebase debug — trace across service boundaries</div>
+            <p class="step-ctx">Velocity endpoint returns empty data for some users. Bug spans two services. Cursor traces it end to end.</p>
+            <span class="chip agents">⚡ Agents Window</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Agents Window</span></div>
+              <div class="prompt-body"><span class="at">@src/services/</span> <span class="at">@src/routes/</span>
+
+GET /api/v1/metrics/velocity/{userId} returns 200 but empty data for some users.
+Authenticated users, correct IDs. Only happens for users with no merged PRs
+in the last 30 days.
+
+Trace the full code path, identify the bug, fix it,
+and add a regression test.</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> Multi-file trace in one conversation. Shows Cursor understands the whole codebase, not just the open file — this is the codebase indexing story in action.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num dev">4</div>
+          <div class="step-content">
+            <div class="step-title">Spin up a Cloud Agent for pre-PR security scan</div>
+            <p class="step-ctx">Before submitting the PR, kick off a Cloud Agent. Dev keeps working. Results are waiting when they're done.</p>
+            <span class="chip cloud">☁️ Cloud Agent</span>
+            <div class="prompt-block">
+              <div class="prompt-top"><div class="prompt-dot cloud"></div><span class="prompt-tag cloud">Cloud Agent — runs asynchronously</span></div>
+              <div class="prompt-body">Before I submit this PR, run a comprehensive pre-merge security check:
+
+1. Scan for hardcoded secrets or credentials in any file
+2. Check requirements.txt for known vulnerable dependencies (CVEs)
+3. Verify all new API endpoints have authentication middleware
+4. Check new code for SQL injection, XSS, and OWASP Top 10 patterns
+5. Run the full test suite and report any failures
+
+Deliver results to /docs/security-scan-report.md when complete.</div>
+            </div>
+            <div class="prompt-note"><strong>Why it lands:</strong> "I'll kick that off while I write my PR description." Async + cloud = unblocked. Cloud Agents feel different from any other tool — not a chat UI with a progress bar, a separate VM doing real work while you're on to the next thing.</div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-num dev">5</div>
+          <div class="step-content">
+            <div class="step-title">Bugbot — automated review on the PR</div>
+            <span class="chip bugbot">🐛 Bugbot</span>
+            <div class="prompt-note" style="margin-top: 0;">
+              Bugbot activates automatically when the PR is submitted. It finds real bugs — logic errors, null pointer risks, race conditions, incorrect async handling — and posts them as PR comments with one-click Autofix.
+              <br><br>
+              <strong>Demo note:</strong> Show a Bugbot comment that caught a real issue in the velocity service (e.g., a race condition in the async event handler or a missing null check). Then show the "Apply fix" button. The full loop — implement in Agents Window → Cloud Agent pre-scan → PR → Bugbot review — demonstrates an end-to-end quality gate with no manual intervention at any step.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <h4>Handoff: Developer → Review (Before/After)</h4>
+      <div class="handoff">
+        <div class="hbefore">
+          <div class="hlabel">Before Cursor</div>
+          <ul>
+            <li>Dev submits PR — reviewers get notified and start reading</li>
+            <li>Reviewer manually checks security, style, correctness</li>
+            <li>CI runs separately, fails separately, gets fixed separately</li>
+            <li>2–3 review cycles before merge — days of latency per PR</li>
+          </ul>
+        </div>
+        <div class="harrow">→</div>
+        <div class="hafter">
+          <div class="hlabel">With Cursor</div>
+          <ul>
+            <li>Cloud Agent catches security issues before PR is submitted</li>
+            <li>Bugbot finds logic bugs and posts fixable comments automatically</li>
+            <li>Reviewers focus on architecture and design — not typos and nulls</li>
+            <li>First-review merge rate climbs significantly</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CONNECTED FLOW -->
+<section class="section" id="flow">
+  <h2>The Connected Flow</h2>
+  <p class="section-intro">The demo only works if each persona's output becomes the next persona's input — in the same system. Each @-reference in the chain is a handoff that used to require a meeting.</p>
+
+  <table class="ba-table">
+    <thead>
+      <tr>
+        <th class="t-phase">Persona</th>
+        <th class="t-phase" style="background: var(--surface);">Output for next persona</th>
+        <th class="t-phase" style="background: var(--surface);">Cursor surface</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ph" style="color: var(--sa-color);">System Architect</td>
+        <td>ADR-001.md + openapi-analytics.yaml committed to /docs</td>
+        <td>Cloud Agent audit → Agents Window design session → commits to repo</td>
+      </tr>
+      <tr>
+        <td class="ph" style="color: var(--de-color);">Data Engineer</td>
+        <td>Working ingestion pipeline + dbt models + passing tests in /src</td>
+        <td>Agents Window @-references ADR → builds → debugs in same session</td>
+      </tr>
+      <tr>
+        <td class="ph" style="color: var(--po-color);">Product Owner</td>
+        <td>requirements.md with acceptance criteria + gap analysis results</td>
+        <td>Agents Window @-references src/ + requirements → non-engineer audit</td>
+      </tr>
+      <tr>
+        <td class="ph" style="color: var(--dev-color);">Developer</td>
+        <td>Clean implementation + tests + pre-scanned and Bugbot-reviewed PR</td>
+        <td>Agents Window @-references ADR + requirements → Cloud Agent pre-PR → Bugbot</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="insight">
+    <strong>The executive close:</strong> With Cursor, every phase's output lives in the codebase — not in a Google Doc, Confluence page, or Jira comment that goes stale. The next person @-references it directly in the Agents Window. Context doesn't get lost at handoffs because there are no handoffs — there's just one system.
+  </div>
+</section>
+
+<!-- TIPS -->
+<section class="section" id="tips">
+  <h2>Demo Tips</h2>
+  <div class="tips-grid">
+    <div class="tip">
+      <h4>Open with the Cloud Agent</h4>
+      <p>Start with the SA section — kick off the Cloud Agent audit immediately. While it runs, explain the story. Come back to the results at the end. Shows async work without making the audience wait.</p>
+    </div>
+    <div class="tip">
+      <h4>Make the @-reference chain visible</h4>
+      <p>Each persona @-references output from the previous one. Say it explicitly: "The DE is picking up right where the SA left off — no meeting, no Confluence, just context." Make the handoff moment visible.</p>
+    </div>
+    <div class="tip">
+      <h4>PO persona surprises people</h4>
+      <p>Use it to expand the story beyond engineering. "This isn't just for developers." A non-engineer doing meaningful work in the Agents Window changes how buyers think about ROI and seats.</p>
+    </div>
+    <div class="tip">
+      <h4>Use a real demo repo</h4>
+      <p>A small Python FastAPI + dbt + pytest project makes the @-references feel real. Even a minimal project with recognizable structure is better than lorem ipsum code.</p>
+    </div>
+    <div class="tip">
+      <h4>Name the maturity stage</h4>
+      <p>Frame the demo: "Most of your team is here — Code Assistant. We're going to show you what Agentic and Cloud Agents look like in practice." It gives execs a ladder to place themselves on.</p>
+    </div>
+    <div class="tip">
+      <h4>Don't wait for Cloud Agents live</h4>
+      <p>Fire off the Cloud Agent, say "I'll check back on that," and move on. The reveal at the end is the payoff. Matches how engineers actually work — async by design.</p>
+    </div>
+    <div class="tip">
+      <h4>End on Bugbot</h4>
+      <p>End with Bugbot + Cloud Agent results arriving together. It mirrors the maturity curve: Tab → Agents → Cloud Agents → automated quality gate. The audience sees the whole arc in one session.</p>
+    </div>
+    <div class="tip">
+      <h4>The "between the boxes" close</h4>
+      <p>Close with: "The bottleneck isn't writing faster — it's the context that disappears at every handoff. Cursor is the context layer." Let the demo evidence make the argument; you just name the pattern.</p>
+    </div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<div class="footer">
+  <p>Cursor Demo Playbook — Project Apex: Four Personas, One Story &nbsp;·&nbsp; Internal GTM Use Only</p>
+</div>
+
+</body>
+</html>

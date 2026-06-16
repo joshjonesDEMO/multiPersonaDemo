@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Apex — Developer Velocity Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #f7f7f4;
+    --surface: #f2f1ed;
+    --surface2: #ebeae5;
+    --dark: #14120b;
+    --dark2: #1b1913;
+    --accent: #f54e00;
+    --text: #26251e;
+    --text-secondary: #5c5a50;
+    --text-muted: #8a887e;
+    --divider: #e1e0db;
+    --good: #16A34A;
+    --warn: #d97706;
+    --bad: #DC2626;
+    --sa-color: #2563EB;
+    --de-color: #16A34A;
+    --po-color: #7C3AED;
+    --dev-color: #C2410C;
+    --card-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Top bar ===== */
+  .topbar {
+    background: var(--dark);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #2B2B2F;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 240px; }
+  .brand-mark {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px; color: #fff; flex-shrink: 0;
+  }
+  .brand-text h1 { font-size: 16px; font-weight: 800; color: #fff; letter-spacing: 0.01em; }
+  .brand-text p { font-size: 12px; color: #9b988e; margin: 0; }
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .control { display: flex; flex-direction: column; gap: 3px; }
+  .control label { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #6f6d64; }
+  .control select, .control input {
+    background: #26241e; color: #edecec;
+    border: 1px solid #36342c; border-radius: 7px;
+    padding: 7px 10px; font-size: 13px; font-family: inherit;
+    min-width: 130px;
+  }
+  .control select:focus, .control input:focus { outline: none; border-color: var(--accent); }
+
+  /* ===== Layout ===== */
+  .container { max-width: 1120px; margin: 0 auto; padding: 28px 32px 64px; }
+  .status {
+    font-size: 12px; color: var(--text-muted);
+    margin-bottom: 22px; display: flex; align-items: center; gap: 8px;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+  .dot.ok { background: var(--good); }
+  .dot.err { background: var(--bad); }
+
+  .section-head { display: flex; align-items: baseline; gap: 12px; margin: 8px 0 16px; }
+  .section-head h2 { font-size: 19px; font-weight: 800; color: var(--dark); }
+  .section-head .sub { font-size: 13px; color: var(--text-muted); }
+  .section { margin-bottom: 40px; }
+
+  /* ===== Cards ===== */
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .card {
+    background: #fff; border: 1px solid var(--divider); border-radius: 12px;
+    padding: 18px 18px 16px; box-shadow: var(--card-shadow);
+  }
+  .card .k { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .card .v { font-size: 30px; font-weight: 800; color: var(--dark); line-height: 1; letter-spacing: -0.02em; }
+  .card .v small { font-size: 14px; font-weight: 600; color: var(--text-muted); margin-left: 3px; }
+  .card .meta { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+  .card.accent { border-top: 3px solid var(--accent); }
+
+  /* ===== Chart panels ===== */
+  .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 820px) { .panels { grid-template-columns: 1fr; } }
+  .panel {
+    background: #fff; border: 1px solid var(--divider); border-radius: 12px;
+    padding: 20px; box-shadow: var(--card-shadow);
+  }
+  .panel h3 { font-size: 14px; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+  .panel .desc { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+  .chart-wrap { position: relative; height: 240px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .chip {
+    background: var(--surface); border: 1px solid var(--divider); border-radius: 999px;
+    padding: 5px 12px; font-size: 12px; font-weight: 600; color: var(--text-secondary);
+  }
+  .chip .av { display: inline-block; width: 18px; height: 18px; border-radius: 50%; background: var(--dev-color); color: #fff; font-size: 10px; font-weight: 800; text-align: center; line-height: 18px; margin-right: 6px; }
+
+  .banner {
+    background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B;
+    border-radius: 10px; padding: 14px 16px; font-size: 13px; margin-bottom: 22px;
+    display: none;
+  }
+  .banner.show { display: block; }
+  .footnote { font-size: 12px; color: var(--text-muted); margin-top: 28px; text-align: center; }
+  .footnote code { background: var(--surface2); padding: 2px 6px; border-radius: 5px; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">A</div>
+    <div class="brand-text">
+      <h1>Project Apex</h1>
+      <p>Developer Velocity Dashboard</p>
+    </div>
+  </div>
+  <div class="controls">
+    <div class="control">
+      <label for="lookback">Window</label>
+      <select id="lookback">
+        <option value="7">Last 7 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+    </div>
+    <div class="control">
+      <label for="apikey">API key</label>
+      <input id="apikey" type="text" value="dev-api-key-change-in-prod" spellcheck="false" />
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="status">
+    <span class="dot" id="statusDot"></span>
+    <span id="statusText">Connecting to Project Apex API…</span>
+  </div>
+
+  <div class="banner" id="banner"></div>
+
+  <!-- TEAM SECTION -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Team velocity</h2>
+      <span class="sub">Cycle time, throughput, and review latency for the selected team</span>
+      <div class="control" style="margin-left:auto">
+        <label for="team">Team</label>
+        <select id="team">
+          <option value="platform-team" selected>platform-team</option>
+          <option value="data-team">data-team</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cards" id="teamCards"></div>
+
+    <div class="panels">
+      <div class="panel">
+        <h3>Cycle time distribution</h3>
+        <p class="desc">Hours from PR open to merge — average vs. p50 vs. p90</p>
+        <div class="chart-wrap"><canvas id="cycleChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Contributors</h3>
+        <p class="desc">Developers with merged PRs in this window</p>
+        <div class="chips" id="contributors"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEVELOPER SECTION -->
+  <div class="section">
+    <div class="section-head">
+      <h2>Developer velocity</h2>
+      <span class="sub">Per-developer throughput and cycle time</span>
+      <div class="control" style="margin-left:auto">
+        <label for="dev">Developer</label>
+        <select id="dev">
+          <option value="jsmith" selected>Jordan Smith (jsmith)</option>
+          <option value="alee">Alex Lee (alee)</option>
+          <option value="priya">Priya Patel (priya)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="cards" id="devCards"></div>
+
+    <div class="panels">
+      <div class="panel">
+        <h3>PRs merged by developer</h3>
+        <p class="desc">Throughput comparison across the team</p>
+        <div class="chart-wrap"><canvas id="prChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>Avg cycle time by developer</h3>
+        <p class="desc">Lower is better — hours from open to merge</p>
+        <div class="chart-wrap"><canvas id="devCycleChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="footnote">
+    Live data from <code>GET /api/v1/metrics/velocity/{user}</code> and
+    <code>GET /api/v1/metrics/team/{team}/summary</code> — Project Apex demo.
+  </p>
+</div>
+
+<script>
+const DEVELOPERS = [
+  { id: "jsmith", name: "Jordan Smith" },
+  { id: "alee",   name: "Alex Lee" },
+  { id: "priya",  name: "Priya Patel" },
+];
+const ACCENT = "#f54e00";
+const GRID = "#e1e0db";
+const charts = {};
+
+const $ = (id) => document.getElementById(id);
+const apiKey = () => $("apikey").value.trim();
+const lookback = () => $("lookback").value;
+
+function setStatus(state, msg) {
+  $("statusDot").className = "dot" + (state ? " " + state : "");
+  $("statusText").textContent = msg;
+}
+function showBanner(msg) {
+  const b = $("banner");
+  if (!msg) { b.classList.remove("show"); return; }
+  b.textContent = msg;
+  b.classList.add("show");
+}
+
+async function apiGet(path) {
+  const res = await fetch(path, { headers: { "X-API-Key": apiKey() } });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(`${res.status} ${path} — ${body.detail || res.statusText}`);
+  }
+  return res.json();
+}
+
+const fmt = (v, unit) => (v === null || v === undefined)
+  ? '<span style="color:var(--text-muted)">—</span>'
+  : `${v}${unit ? `<small>${unit}</small>` : ""}`;
+
+function card(k, v, unit, meta) {
+  return `<div class="card${meta && meta.accent ? " accent" : ""}">
+    <div class="k">${k}</div>
+    <div class="v">${fmt(v, unit)}</div>
+    ${meta && meta.text ? `<div class="meta">${meta.text}</div>` : ""}
+  </div>`;
+}
+
+function renderTeamCards(d) {
+  $("teamCards").innerHTML = [
+    card("PRs merged", d.prs_merged, "", { accent: true, text: `over ${d.period_days} days` }),
+    card("Avg cycle time", d.avg_cycle_time_hours, "h", { text: "open → merge" }),
+    card("p50 cycle time", d.p50_cycle_time_hours, "h", { text: "median PR" }),
+    card("p90 cycle time", d.p90_cycle_time_hours, "h", { text: "slowest 10%" }),
+    card("Avg review latency", d.avg_review_latency_hours, "h", { text: `${d.reviews_submitted} reviews` }),
+  ].join("");
+
+  const c = $("contributors");
+  if (d.contributors && d.contributors.length) {
+    c.innerHTML = d.contributors.map((id) => {
+      const dev = DEVELOPERS.find((x) => x.id === id);
+      const name = dev ? dev.name : id;
+      return `<span class="chip"><span class="av">${(name[0] || "?").toUpperCase()}</span>${name} · ${id}</span>`;
+    }).join("");
+  } else {
+    c.innerHTML = `<span class="chip">No contributors in window</span>`;
+  }
+}
+
+function renderDevCards(d) {
+  const dev = DEVELOPERS.find((x) => x.id === d.user_id);
+  $("devCards").innerHTML = [
+    card("PRs merged", d.prs_merged, "", { accent: true, text: dev ? dev.name : d.user_id }),
+    card("Avg cycle time", d.avg_cycle_time_hours, "h", { text: "open → merge" }),
+    card("Avg additions", d.avg_additions, "", { text: "lines added / PR" }),
+    card("Avg deletions", d.avg_deletions, "", { text: "lines removed / PR" }),
+  ].join("");
+}
+
+function upsertChart(id, config) {
+  if (charts[id]) { charts[id].destroy(); }
+  charts[id] = new Chart($(id), config);
+}
+
+function barConfig(labels, data, color, unit) {
+  return {
+    type: "bar",
+    data: { labels, datasets: [{ data, backgroundColor: color, borderRadius: 6, maxBarThickness: 54 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (c) => `${c.parsed.y}${unit || ""}` } },
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: "#5c5a50", font: { size: 12 } } },
+        y: { beginAtZero: true, grid: { color: GRID }, ticks: { color: "#8a887e", font: { size: 11 } } },
+      },
+    },
+  };
+}
+
+function renderCycleChart(d) {
+  upsertChart("cycleChart",
+    barConfig(["Average", "p50", "p90"],
+      [d.avg_cycle_time_hours || 0, d.p50_cycle_time_hours || 0, d.p90_cycle_time_hours || 0],
+      [ACCENT, "#f59e0b", "#7c3aed"], "h"));
+}
+
+function renderDevComparison(rows) {
+  const labels = rows.map((r) => r.name);
+  upsertChart("prChart", barConfig(labels, rows.map((r) => r.prs_merged), ACCENT, ""));
+  upsertChart("devCycleChart", barConfig(labels, rows.map((r) => r.avg_cycle_time_hours || 0), "#2563EB", "h"));
+}
+
+async function loadTeam() {
+  const team = $("team").value;
+  const d = await apiGet(`/api/v1/metrics/team/${team}/summary?lookback_days=${lookback()}`);
+  renderTeamCards(d);
+  renderCycleChart(d);
+}
+
+async function loadDeveloper() {
+  const id = $("dev").value;
+  const d = await apiGet(`/api/v1/metrics/velocity/${id}?lookback_days=${lookback()}`);
+  renderDevCards(d);
+}
+
+async function loadComparison() {
+  const results = await Promise.all(DEVELOPERS.map(async (dev) => {
+    const d = await apiGet(`/api/v1/metrics/velocity/${dev.id}?lookback_days=${lookback()}`);
+    return { name: dev.name, prs_merged: d.prs_merged, avg_cycle_time_hours: d.avg_cycle_time_hours };
+  }));
+  renderDevComparison(results);
+}
+
+async function refresh() {
+  try {
+    setStatus("", "Loading metrics…");
+    showBanner("");
+    await Promise.all([loadTeam(), loadDeveloper(), loadComparison()]);
+    setStatus("ok", `Connected · ${new Date().toLocaleTimeString()} · ${lookback()}-day window`);
+  } catch (e) {
+    setStatus("err", "API error");
+    showBanner(e.message + (String(e.message).startsWith("401")
+      ? " — check the API key in the top bar." : ""));
+  }
+}
+
+["lookback", "team", "dev", "apikey"].forEach((id) =>
+  $(id).addEventListener("change", refresh));
+$("apikey").addEventListener("keyup", (e) => { if (e.key === "Enter") refresh(); });
+
+refresh();
+</script>
+</body>
+</html>

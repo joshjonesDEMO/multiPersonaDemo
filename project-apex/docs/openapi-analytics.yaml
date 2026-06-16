@@ -1,0 +1,213 @@
+openapi: 3.0.3
+info:
+  title: Project Apex — AnalyticsService API
+  description: |
+    Developer Velocity Dashboard API. Ingests GitHub webhook events and exposes
+    velocity metrics for developers and teams.
+  version: 0.1.0
+  contact:
+    name: Platform Team
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /webhooks/github:
+    post:
+      tags:
+        - Webhooks
+      summary: Ingest GitHub webhook events
+      description: |
+        Receives and persists GitHub webhook payloads. Supported event types:
+        pull_request, push, pull_request_review.
+      operationId: ingestGithubEvent
+      security: []  # Webhook uses X-Hub-Signature-256, not API key
+      parameters:
+        - name: X-GitHub-Event
+          in: header
+          required: true
+          schema:
+            type: string
+            enum: [pull_request, push, pull_request_review]
+        - name: X-Hub-Signature-256
+          in: header
+          required: false
+          schema:
+            type: string
+            description: HMAC-SHA256 signature when WEBHOOK_SECRET is configured
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Raw GitHub webhook payload
+      responses:
+        '200':
+          description: Event accepted or ignored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '401':
+          description: Invalid webhook signature
+
+  /api/v1/metrics/velocity/{userId}:
+    get:
+      tags:
+        - Metrics
+      summary: 30-day developer velocity
+      description: |
+        Return cycle time and throughput for a single developer over the lookback window.
+        userId is the GitHub login (e.g. "jsmith").
+      operationId: getDeveloperVelocity
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: jsmith
+        - name: lookback_days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 90
+      responses:
+        '200':
+          description: Developer velocity metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeveloperVelocityResponse'
+        '400':
+          description: lookback_days exceeds 90
+        '401':
+          description: Invalid or missing API key
+
+  /api/v1/metrics/team/{teamId}/summary:
+    get:
+      tags:
+        - Metrics
+      summary: Team rollup
+      description: |
+        Aggregated cycle time, throughput, and review latency for a team.
+        teamId matches repo prefix convention (e.g. "platform-team").
+      operationId: getTeamSummary
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+            example: platform-team
+        - name: lookback_days
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 30
+            minimum: 1
+            maximum: 90
+      responses:
+        '200':
+          description: Team velocity and review summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamSummaryResponse'
+        '400':
+          description: lookback_days exceeds 90
+        '401':
+          description: Invalid or missing API key
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: project-apex
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authenticated endpoints
+
+  schemas:
+    WebhookResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [accepted, ignored]
+        event_type:
+          type: string
+
+    DeveloperVelocityResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+        period_days:
+          type: integer
+        prs_merged:
+          type: integer
+        avg_cycle_time_hours:
+          type: number
+          nullable: true
+        avg_additions:
+          type: number
+        avg_deletions:
+          type: number
+
+    TeamSummaryResponse:
+      type: object
+      properties:
+        team_id:
+          type: string
+        period_days:
+          type: integer
+        prs_merged:
+          type: integer
+        avg_cycle_time_hours:
+          type: number
+          nullable: true
+        p50_cycle_time_hours:
+          type: number
+          nullable: true
+        p90_cycle_time_hours:
+          type: number
+          nullable: true
+        contributors:
+          type: array
+          items:
+            type: string
+        avg_review_latency_hours:
+          type: number
+          nullable: true
+        reviews_submitted:
+          type: integer

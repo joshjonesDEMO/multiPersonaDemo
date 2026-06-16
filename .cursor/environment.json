@@ -1,0 +1,9 @@
+{
+  "install": "pip install -r project-apex/requirements.txt && (test -f project-apex/.env || cp project-apex/.env.example project-apex/.env) && cd project-apex && python3 -m scripts.seed_data",
+  "terminals": [
+    {
+      "name": "api",
+      "command": "export PATH=\"$HOME/.local/bin:$PATH\" && cd project-apex && uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload"
+    }
+  ]
+}

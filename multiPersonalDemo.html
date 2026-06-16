@@ -161,6 +161,9 @@
   .tip h4 { font-size: 12px; margin-bottom: 7px; }
   .tip p { font-size: 13px; margin: 0; color: var(--text-secondary); line-height: 1.5; }
 
+  code { font-family: 'SF Mono','Fira Code','Consolas',monospace; font-size: 12.5px; background: var(--surface2); color: var(--dark); padding: 2px 6px; border-radius: 5px; }
+  .hafter code, .hbefore code { background: rgba(0,0,0,0.05); }
+
   hr { border: none; border-top: 1px solid var(--divider); margin: 28px 0; }
   [id] { scroll-margin-top: 64px; }
   .footer { background: var(--dark); padding: 24px 32px; text-align: center; margin-top: 52px; }
@@ -187,6 +190,7 @@
   <a href="#po">Product Owner</a>
   <a href="#dev">Developer</a>
   <a href="#flow">Connected Flow</a>
+  <a href="#payoff">The Payoff</a>
   <a href="#tips">Tips</a>
 </nav>
 
@@ -899,6 +903,70 @@ Deliver results to /docs/security-scan-report.md when complete.</div>
   </div>
 </section>
 
+<!-- THE PAYOFF -->
+<section class="section" id="payoff">
+  <h2>The Payoff — A Dashboard, Not a JSON Blob</h2>
+  <p class="section-intro">Every persona's work flows into one artifact the room can actually <em>see</em>. In the final reveal, Project Apex isn't a headless API — open the root URL and the four-phase story lands as a live <strong>Developer Velocity Dashboard</strong>, powered by the exact endpoints the team just built.</p>
+
+  <span class="chip bugbot">🖥 Live Dashboard — served by FastAPI at /</span>
+
+  <div class="handoff">
+    <div class="hbefore">
+      <div class="hlabel">Without the frontend</div>
+      <ul>
+        <li>You promise a "Developer Velocity Dashboard" but show Swagger or raw JSON</li>
+        <li>Hitting <code>/</code> returns <code>{"detail":"Invalid or missing API key"}</code> — a white page with a "Pretty print" checkbox</li>
+        <li>The climax of the demo becomes an anticlimax</li>
+      </ul>
+    </div>
+    <div class="harrow">→</div>
+    <div class="hafter">
+      <div class="hlabel">With the dashboard</div>
+      <ul>
+        <li>The root URL renders a branded dashboard: cycle time, throughput, review latency</li>
+        <li>Team rollups and per-developer charts, all live from the API the team just shipped</li>
+        <li>The Developer phase gets a real "ship it" moment the buyer can see</li>
+      </ul>
+    </div>
+  </div>
+
+  <h4>How to run it live</h4>
+  <div class="prompt-block">
+    <div class="prompt-top"><div class="prompt-dot"></div><span class="prompt-tag">Terminal — from project-apex/</span></div>
+    <div class="prompt-body">uvicorn src.main:app --reload
+<span class="cmt"># then open the dashboard — the root URL is now the payoff, not a JSON error</span>
+open http://127.0.0.1:8000/</div>
+  </div>
+
+  <div class="demo-steps">
+    <div class="step">
+      <div class="step-num dev">1</div>
+      <div class="step-content">
+        <div class="step-title">Open the root URL as the closing reveal</div>
+        <p class="step-ctx">After the Developer ships the endpoints, navigate to <code>/</code>. The same API the four personas built now powers a real dashboard. Say it plainly: "This is what we just built — together, in one system."</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num dev">2</div>
+      <div class="step-content">
+        <div class="step-title">Show auth in action with the API-key field</div>
+        <p class="step-ctx">Clear the API key in the top bar — the dashboard surfaces a "check the API key" banner. Paste it back and the data returns. Proves the auth the team wired across the handoff actually works end to end.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num dev">3</div>
+      <div class="step-content">
+        <div class="step-title">Toggle the window and team to make it feel live</div>
+        <p class="step-ctx">Switch the 7 / 30 / 90-day window and flip between <code>platform-team</code> and <code>data-team</code>. The charts refetch from the API in real time — this is a working product, not a static mockup.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight">
+    <strong>The visual close:</strong> The four-persona story used to end in raw JSON. Now it ends in a dashboard the buyer can see — built by an Architect, a Data Engineer, a Product Owner, and a Developer all working in one context. The artifact <em>is</em> the argument.
+  </div>
+</section>
+
 <!-- TIPS -->
 <section class="section" id="tips">
   <h2>Demo Tips</h2>
@@ -934,6 +1002,10 @@ Deliver results to /docs/security-scan-report.md when complete.</div>
     <div class="tip">
       <h4>The "between the boxes" close</h4>
       <p>Close with: "The bottleneck isn't writing faster — it's the context that disappears at every handoff. Cursor is the context layer." Let the demo evidence make the argument; you just name the pattern.</p>
+    </div>
+    <div class="tip">
+      <h4>End on the live dashboard</h4>
+      <p>For the final reveal, open <code>http://127.0.0.1:8000/</code>. The headless API becomes a visible Developer Velocity Dashboard. Seeing the four personas' work render as charts lands harder than any slide. See <a href="#payoff" style="color: var(--dev-color); font-weight: 700;">The Payoff</a>.</p>
     </div>
   </div>
 </section>

@@ -1,5 +1,7 @@
 from fastapi import FastAPI
+from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from src.routes import webhooks, metrics, users
 from src.auth.middleware import AuthMiddleware
@@ -26,6 +28,13 @@ app.add_middleware(AuthMiddleware)
 app.include_router(webhooks.router, prefix="/webhooks", tags=["Webhooks"])
 app.include_router(metrics.router, prefix="/api/v1/metrics", tags=["Metrics"])
 app.include_router(users.router)
+
+DASHBOARD_FILE = Path(__file__).parent / "static" / "dashboard.html"
+
+
+@app.get("/", include_in_schema=False)
+async def dashboard():
+    return FileResponse(DASHBOARD_FILE)
 
 
 @app.get("/health")

@@ -1,0 +1,28 @@
+---
+description: Project Apex FastAPI conventions — async SQLAlchemy, API-key auth, and test coverage for new endpoints
+globs: project-apex/src/**/*.py
+alwaysApply: false
+---
+
+# Project Apex — API Conventions
+
+Project Apex is a FastAPI + async SQLAlchemy service. Follow these when adding or changing API code.
+
+## Auth
+- Every route requires an `X-API-Key` header by default (enforced in `src/auth/middleware.py`).
+- Only add a path to `UNPROTECTED_PATHS` if it is intentionally public (e.g. `/`, `/health`, docs).
+
+## Async data access
+- Use `async def` endpoints with the injected `AsyncSession` via `Depends(get_db)`.
+- Query with `await db.execute(select(...))` — never use a synchronous Session.
+
+```python
+@router.get("/velocity/{user_id}")
+async def get_developer_velocity(user_id: str, db: AsyncSession = Depends(get_db)):
+    svc = VelocityService(db)
+    return await svc.get_developer_metrics(user_id)
+```
+
+## New endpoints must have tests
+- Add or extend a `tests/test_*.py` using `httpx.AsyncClient` + `ASGITransport`.
+- Cover both the authenticated 200 case and the 401 when the API key is missing.

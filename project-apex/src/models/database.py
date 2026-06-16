@@ -1,6 +1,7 @@
 """
 SQLAlchemy models and database session management.
 """
+import os
 from datetime import datetime
 from typing import Optional, AsyncGenerator
 
@@ -9,7 +10,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.sql import func
 
-DATABASE_URL = "sqlite+aiosqlite:///./apex.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./apex.db")
 
 engine = create_async_engine(DATABASE_URL, echo=False)
 AsyncSessionLocal = async_sessionmaker(engine, expire_on_commit=False)

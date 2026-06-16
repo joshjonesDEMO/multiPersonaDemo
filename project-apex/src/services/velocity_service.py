@@ -46,7 +46,7 @@ class VelocityService:
                 and_(
                     DeveloperEvent.author == user_id,
                     DeveloperEvent.event_type == "pull_request",
-                    DeveloperEvent.created_at >= since,
+                    DeveloperEvent.merged_at >= since,
                     DeveloperEvent.merged_at.isnot(None),
                 )
             )
@@ -63,28 +63,29 @@ class VelocityService:
                 "avg_deletions": 0,
             }
 
-        # BUG: merged_at is filtered to NOT NULL above, but cycle_time arithmetic
-        # can still fail if a record was inserted with merged_at=None due to a
-        # data quality issue upstream. The filter guards against most cases, but
-        # records inserted before the NOT NULL constraint was enforced may slip through.
-        #
-        # Real bug: for users who HAVE merged PRs but the cycle_time calculation
-        # hits a None merged_at from a bad record, the whole endpoint returns 200 + empty.
-        # Fix: add a defensive None check before the subtraction.
+        valid_prs = [pr for pr in merged_prs if pr.merged_at is not None]
+        if not valid_prs:
+            return {
+                "user_id": user_id,
+                "period_days": lookback_days,
+                "prs_merged": 0,
+                "avg_cycle_time_hours": None,
+                "avg_additions": 0,
+                "avg_deletions": 0,
+            }
+
         cycle_times = [
             (pr.merged_at - pr.created_at).total_seconds() / 3600
-            for pr in merged_prs
-            # missing: `if pr.merged_at is not None` guard — causes silent empty result
-            # when a single bad record slips through the NOT NULL filter
+            for pr in valid_prs
         ]
 
         return {
             "user_id": user_id,
             "period_days": lookback_days,
-            "prs_merged": len(merged_prs),
+            "prs_merged": len(valid_prs),
             "avg_cycle_time_hours": round(sum(cycle_times) / len(cycle_times), 2),
-            "avg_additions": round(sum(pr.additions for pr in merged_prs) / len(merged_prs)),
-            "avg_deletions": round(sum(pr.deletions for pr in merged_prs) / len(merged_prs)),
+            "avg_additions": round(sum(pr.additions for pr in valid_prs) / len(valid_prs)),
+            "avg_deletions": round(sum(pr.deletions for pr in valid_prs) / len(valid_prs)),
         }
 
     async def get_team_cycle_time(
@@ -109,7 +110,7 @@ class VelocityService:
                 and_(
                     DeveloperEvent.repo.like(f"%{team_id}%"),
                     DeveloperEvent.event_type == "pull_request",
-                    DeveloperEvent.created_at >= since,
+                    DeveloperEvent.merged_at >= since,
                     DeveloperEvent.merged_at.isnot(None),
                 )
             )
@@ -127,9 +128,21 @@ class VelocityService:
                 "contributors": [],
             }
 
+        valid_prs = [pr for pr in prs if pr.merged_at is not None]
+        if not valid_prs:
+            return {
+                "team_id": team_id,
+                "period_days": lookback_days,
+                "prs_merged": 0,
+                "avg_cycle_time_hours": None,
+                "p50_cycle_time_hours": None,
+                "p90_cycle_time_hours": None,
+                "contributors": [],
+            }
+
         cycle_times_raw = [
             (pr.merged_at - pr.created_at).total_seconds() / 3600
-            for pr in prs
+            for pr in valid_prs
         ]
         cycle_times = sorted(cycle_times_raw)
         n = len(cycle_times)
@@ -141,7 +154,7 @@ class VelocityService:
             "avg_cycle_time_hours": round(sum(cycle_times) / n, 2),
             "p50_cycle_time_hours": round(cycle_times[n // 2], 2),
             "p90_cycle_time_hours": round(cycle_times[int(n * 0.9)], 2),
-            "contributors": list({pr.author for pr in prs}),
+            "contributors": list({pr.author for pr in valid_prs}),
         }
 
     async def get_review_latency(

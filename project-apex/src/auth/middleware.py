@@ -7,7 +7,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 import os
 
-UNPROTECTED_PATHS = {"/health", "/docs", "/openapi.json", "/redoc"}
+UNPROTECTED_PATHS = {"/health", "/docs", "/openapi.json", "/redoc", "/webhooks/github"}
 
 
 class AuthMiddleware(BaseHTTPMiddleware):

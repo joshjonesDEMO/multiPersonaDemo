@@ -27,7 +27,7 @@ def parse_pull_request_event(payload: dict[str, Any]) -> PullRequestEvent:
         author=pr["user"]["login"],
         title=pr["title"],
         created_at=_parse_dt(pr["created_at"]),
-        merged_at=_parse_dt(pr["merged_at"]),
+        merged_at=_parse_dt(pr.get("merged_at")),
         closed_at=_parse_dt(pr.get("closed_at")),
         additions=pr.get("additions", 0),
         deletions=pr.get("deletions", 0),

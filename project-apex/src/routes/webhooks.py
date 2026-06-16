@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Header, Request, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ingestion.github_handler import route_event
-from src.ingestion.event_models import PullRequestEvent, ReviewEvent
+from src.ingestion.event_models import PullRequestEvent, PushEvent, ReviewEvent
 from src.ingestion.event_processor import enqueue_event
 from src.models.database import DeveloperEvent, ReviewRecord, get_db
 
@@ -63,6 +63,18 @@ async def ingest_github_event(
             closed_at=event.closed_at,
             additions=event.additions,
             deletions=event.deletions,
+        )
+        db.add(record)
+        await db.commit()
+        await enqueue_event(event)
+
+    elif isinstance(event, PushEvent):
+        record = DeveloperEvent(
+            event_id=event.event_id,
+            event_type="push",
+            repo=event.repo,
+            author=event.pusher,
+            created_at=event.pushed_at,
         )
         db.add(record)
         await db.commit()

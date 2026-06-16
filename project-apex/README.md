@@ -43,6 +43,14 @@ uvicorn src.main:app --reload
 pytest tests/ -v
 ```
 
+## Seeding demo data
+
+```bash
+python -m scripts.seed_data
+```
+
+Populates `apex.db` with sample developer events and review records. Required for live endpoint demos (`/api/v1/metrics/velocity/jsmith`, `/api/v1/metrics/team/platform-team/summary`).
+
 ## dbt models
 
 ```
